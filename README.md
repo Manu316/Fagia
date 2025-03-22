@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # app1
 
 ## Project setup
@@ -22,3 +23,6 @@ npm run lint
 
 ### Customize configuration
 See [Configuration Reference](https://cli.vuejs.org/config/).
+=======
+# Fagia
+>>>>>>> 774369983f35c7d6878a17aa28088288f286308a
