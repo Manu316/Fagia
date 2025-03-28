@@ -24,6 +24,7 @@
       <button type="submit" class="login-button">Ingresar</button>
     </form>
     <p v-if="error" class="error">{{ error }}</p>
+    <p class="register-link">¿Eres nuevo? <a href="#" @click="$emit('show-register')" class="register">Regístrate</a></p>
   </div>
 </template>
 
@@ -121,5 +122,14 @@ input {
 .error {
   color: red;
   margin-top: 20px;
+}
+
+.register-link {
+  margin-top: 20px;
+}
+
+.register {
+  color: #fff;
+  text-decoration: none;
 }
 </style>
