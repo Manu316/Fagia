@@ -81,7 +81,7 @@ export default {
         // Usa tu apiClient en lugar de axios directamente
         // Ajusta la ruta si tu apiClient ya tiene la baseURL
         // y si el endpoint en tu authService.js es diferente
-        const response = await apiClient.post('/account/register-donator', this.donator); // Asumiendo que tu servicio de signup maneja esto
+        const response = await apiClient.post('/register-donator', this.donator); // Asumiendo que tu servicio de signup maneja esto
         this.successMessage = response.data.message || 'Donador registrado con éxito. Por favor, inicia sesión.';
         // Limpiar formulario
         this.donator = {

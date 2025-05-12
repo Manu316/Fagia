@@ -95,7 +95,7 @@ export default {
       try {
         // Usa tu apiClient
         // Ajusta la ruta si es necesario
-        const response = await apiClient.post('/account/register-beneficiary', this.beneficiary);
+        const response = await apiClient.post('/register-beneficiary', this.beneficiary);
         this.successMessage = response.data.message || 'Beneficiario registrado con éxito. Por favor, inicia sesión.';
         // Limpiar formulario
         this.beneficiary = {

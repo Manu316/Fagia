@@ -1,33 +1,31 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '@/stores/authStore';
 
-// Vistas Públicas
+// --- Vistas Públicas ---
 import LoginView from '@/views/auth/LoginView.vue';
-import RegisterDonatorView from '@/views/auth/RegisterDonatorView.vue'; // Vista de inicio por defecto
+import RegisterDonatorView from '@/views/auth/RegisterDonatorView.vue';
 import RegisterBeneficiaryView from '@/views/auth/RegisterBeneficiaryView.vue';
 import NotFoundView from '@/views/NotFoundView.vue';
-// import HomeView from '@/views/HomeView.vue'; // Si tuvieras un HomeView general, lo importarías aquí
 
-// Vistas Comunes (Autenticadas)
+// --- Vistas Comunes (Autenticadas) ---
 import UserDonationsView from '@/views/common/UserDonationsView.vue';
 
-// Vistas de Donador
+// --- Vistas de Donador (Autenticadas) ---
 import DashboardDonatorView from '@/views/donator/DashboardDonatorView.vue';
 import AlimentsView from '@/views/donator/AlimentsView.vue';
 
-// Vistas de Beneficiario
+// --- Vistas de Beneficiario (Autenticadas) ---
 import DashboardBeneficiaryView from '@/views/beneficiary/DashboardBeneficiaryView.vue';
 
+// --- Definición de Rutas ---
 const routes = [
-  // --- RUTA RAÍZ: Muestra RegisterDonatorView por defecto ---
+  // Ruta Raíz: Redirige automáticamente a la página de registro de donador
   {
     path: '/',
-    name: 'DefaultRegisterDonator', // Nombre único para esta ruta raíz
-    component: RegisterDonatorView,
-    meta: { guestOnly: true } // Solo para usuarios no autenticados
+    redirect: '/register-donator' // Redirige a la ruta con nombre 'RegisterDonator' o al path
   },
-  // ----------------------------------------------------------
 
+  // Rutas Públicas (solo para usuarios no autenticados)
   {
     path: '/login',
     name: 'Login',
@@ -36,7 +34,7 @@ const routes = [
   },
   {
     path: '/register-donator',
-    name: 'RegisterDonator', // Ruta explícita para el registro de donador
+    name: 'RegisterDonator',
     component: RegisterDonatorView,
     meta: { guestOnly: true }
   },
@@ -48,32 +46,40 @@ const routes = [
   },
 
   // --- Rutas Autenticadas ---
+  // Requieren que el usuario haya iniciado sesión
+
+  // Rutas Generales Autenticadas
   {
     path: '/donations',
     name: 'UserDonations',
     component: UserDonationsView,
-    meta: { requiresAuth: true }, // Requiere que el usuario esté autenticado
+    meta: { requiresAuth: true },
   },
+
+  // Rutas Específicas del Donador
   {
     path: '/donator/dashboard',
     name: 'DashboardDonator',
     component: DashboardDonatorView,
-    meta: { requiresAuth: true, role: 'donator' }, // Requiere auth y rol 'donator'
+    meta: { requiresAuth: true, role: 'donator' },
   },
   {
     path: '/donator/aliments',
     name: 'DonatorAliments',
     component: AlimentsView,
-    meta: { requiresAuth: true, role: 'donator' }, // Requiere auth y rol 'donator'
+    meta: { requiresAuth: true, role: 'donator' },
   },
+
+  // Rutas Específicas del Beneficiario
   {
     path: '/beneficiary/dashboard',
     name: 'DashboardBeneficiary',
     component: DashboardBeneficiaryView,
-    meta: { requiresAuth: true, role: 'beneficiary' }, // Requiere auth y rol 'beneficiary'
+    meta: { requiresAuth: true, role: 'beneficiary' },
   },
 
-  // --- Ruta Catch-all para 404 (Debe ser la última) ---
+  // --- Ruta Catch-all para 404 (Página No Encontrada) ---
+  // Debe ser la última ruta definida
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
@@ -81,66 +87,69 @@ const routes = [
   },
 ];
 
+// --- Creación de la Instancia del Router ---
 const router = createRouter({
-  history: createWebHistory(process.env.BASE_URL), // Usar process.env para Vue CLI
+  // Usa el modo historial HTML5 (URLs limpias sin #)
+  // y configura la base URL usando la variable de entorno de Vue CLI
+  history: createWebHistory(process.env.BASE_URL),
+  // Proporciona el array de rutas definido arriba
   routes,
 });
 
-// Navigation Guards
+// --- Guardias de Navegación Globales (Navigation Guards) ---
 router.beforeEach((to, from, next) => {
+  // Obtiene la instancia del store de autenticación
   const authStore = useAuthStore();
 
-  // Intenta inicializar el estado de autenticación desde localStorage si aún no está cargado en el store.
-  // Esto es útil si el usuario recarga la página.
+  // Intenta cargar el estado de autenticación desde localStorage al inicio
+  // si el estado del store aún no está cargado (útil en recargas de página)
   if (!authStore.user && localStorage.getItem('authToken')) {
       authStore.initializeAuth();
   }
 
+  // Obtiene el estado actual de autenticación y el rol del usuario
   const isAuthenticated = authStore.isAuthenticated;
   const userRole = authStore.userRole;
 
-  // 1. Manejar rutas 'guestOnly' (solo para no autenticados)
+  // --- Lógica de Protección de Rutas ---
+
+  // 1. Si la ruta es solo para invitados (guestOnly) y el usuario YA está autenticado:
+  //    Redirigir al dashboard correspondiente según el rol.
   if (to.meta.guestOnly && isAuthenticated) {
-    // Si el usuario está autenticado e intenta acceder a una ruta 'guestOnly'
-    // (como '/', '/login', '/register-donator', '/register-beneficiary'),
-    // redirigirlo a su dashboard correspondiente.
     if (userRole === 'donator') {
-      return next({ name: 'DashboardDonator' });
+      return next({ name: 'DashboardDonator' }); // Ir al dashboard de donador
     } else if (userRole === 'beneficiary') {
-      return next({ name: 'DashboardBeneficiary' });
+      return next({ name: 'DashboardBeneficiary' }); // Ir al dashboard de beneficiario
     } else {
-      // Fallback si el usuario está autenticado pero no tiene un rol claro
-      // o no hay un dashboard específico para ese "no-rol".
-      // Podrías tener una vista "Home" general para usuarios autenticados o redirigir a '/donations'.
-      // Evita redirigir a una ruta 'guestOnly' aquí para prevenir bucles.
-      return next({ name: 'UserDonations' }); // Ejemplo de fallback
+      // Si está autenticado pero no tiene un rol específico o dashboard definido,
+      // redirigirlo a una página segura por defecto (ej. lista de donaciones).
+      // Evita redirigir a otra ruta guestOnly para prevenir bucles.
+      return next({ name: 'UserDonations' });
     }
   }
 
-  // 2. Manejar rutas 'requiresAuth' (solo para autenticados)
+  // 2. Si la ruta requiere autenticación (requiresAuth) y el usuario NO está autenticado:
+  //    Redirigir a la página de Login, guardando la ruta original a la que intentaba acceder.
   if (to.meta.requiresAuth && !isAuthenticated) {
-    // Si la ruta requiere autenticación y el usuario no está autenticado,
-    // redirigirlo a la página de Login.
-    // Guardar la ruta original para redirigir después del login.
     return next({ name: 'Login', query: { redirect: to.fullPath } });
   }
 
-  // 3. Manejar rutas con 'role' específico (solo para autenticados con el rol correcto)
+  // 3. Si la ruta requiere un rol específico (role) y el usuario está autenticado pero NO tiene ese rol:
+  //    Redirigir al usuario a su propio dashboard (si tiene uno) o a una página de "No encontrado/No autorizado".
   if (to.meta.role && isAuthenticated && to.meta.role !== userRole) {
-    // Si el usuario está autenticado pero no tiene el rol requerido para la ruta.
     console.warn(`Acceso denegado a ${to.path}. Rol requerido: ${to.meta.role}, Rol del usuario: ${userRole}`);
-    // Redirigir a su propio dashboard (si tiene uno) o a una página de "No Autorizado" o "NotFound".
     if (userRole === 'donator') {
-        return next({ name: 'DashboardDonator' });
+      return next({ name: 'DashboardDonator' }); // Devolver al dashboard de donador
     } else if (userRole === 'beneficiary') {
-        return next({ name: 'DashboardBeneficiary' });
+      return next({ name: 'DashboardBeneficiary' }); // Devolver al dashboard de beneficiario
     }
-    // Si no tiene un dashboard claro o el rol es inesperado.
-    return next({ name: 'NotFound' }); // O una página específica de "Acceso Denegado"
+    // Si no tiene un rol con dashboard asociado, enviar a NotFound
+    return next({ name: 'NotFound' });
   }
 
-  // Si ninguna de las condiciones anteriores se cumple, permite la navegación.
+  // 4. Si ninguna de las condiciones anteriores se cumple, permitir la navegación.
   next();
 });
 
+// --- Exportar la instancia del router ---
 export default router;
