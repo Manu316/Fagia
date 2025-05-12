@@ -1,30 +1,27 @@
-// src/stores/authStore.js
 import { defineStore } from 'pinia';
-import apiClient from '@/api/api'; // Asegúrate que la ruta a tu api.js es correcta
-import router from '@/router';     // Importa tu instancia de Vue Router
+import apiClient from '@/api/api'; // Asegúrate que la ruta sea correcta
+import router from '@/router';     // Asegúrate que la ruta sea correcta
 
 // Función auxiliar para obtener y parsear el usuario de forma segura desde localStorage
 const getInitialUser = () => {
   const userItem = localStorage.getItem('authUser');
-  if (userItem && userItem !== "undefined" && userItem !== "null") { // Comprueba que no sea null, ni la cadena "undefined", ni la cadena "null"
+  if (userItem && userItem !== "undefined" && userItem !== "null") {
     try {
       const parsedUser = JSON.parse(userItem);
-      // Valida que el usuario parseado no sea null o un objeto vacío si eso no es deseado
-      if (parsedUser && typeof parsedUser === 'object' && Object.keys(parsedUser).length > 0) {
+      // Validamos que el usuario parseado tenga la propiedad 'role'
+      if (parsedUser && typeof parsedUser === 'object' && Object.keys(parsedUser).length > 0 && parsedUser.role) {
         return parsedUser;
       }
-      // Si parsedUser es null o un objeto vacío después del parseo, trátalo como inválido
       localStorage.removeItem('authUser');
       return null;
     } catch (e) {
       console.error("Failed to parse 'authUser' from localStorage:", e);
-      localStorage.removeItem('authUser'); // Limpiar ítem corrupto
+      localStorage.removeItem('authUser');
       return null;
     }
   }
-  // Si userItem es null, "undefined", o "null", se considera inválido
-  if (userItem === "undefined" || userItem === "null") {
-    localStorage.removeItem('authUser'); // Limpiar si es una cadena inválida
+  if (userItem === "undefined" || userItem === "null" || userItem === null) {
+    localStorage.removeItem('authUser');
   }
   return null;
 };
@@ -32,103 +29,178 @@ const getInitialUser = () => {
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     token: localStorage.getItem('authToken') || null,
-    user: getInitialUser(), // Usa la función auxiliar para inicializar el usuario
+    user: getInitialUser(), // user será null o { role: '...' } u otros datos si se guardan
   }),
   getters: {
-    // Considera que isAuthenticated sea verdadero solo si hay token Y usuario
-    isAuthenticated: (state) => !!state.token && !!state.user,
+    isAuthenticated: (state) => !!state.token && !!state.user && !!state.user.role,
     userRole: (state) => state.user?.role || null,
     isDonator: (state) => state.user?.role === 'donator',
     isBeneficiary: (state) => state.user?.role === 'beneficiary',
   },
   actions: {
-    // Acción centralizada para establecer los datos de autenticación
-    setAuthData(token, userData) {
+    setAuthData(token, userDataWithRole) {
       this.token = token;
-      this.user = userData;
+      this.user = userDataWithRole;
       localStorage.setItem('authToken', token);
-      localStorage.setItem('authUser', JSON.stringify(userData));
+      if (userDataWithRole && userDataWithRole.role) {
+        localStorage.setItem('authUser', JSON.stringify(userDataWithRole));
+      } else {
+        localStorage.removeItem('authUser');
+      }
     },
 
-    // Acción centralizada para limpiar los datos de autenticación
     clearAuthData() {
       this.token = null;
       this.user = null;
       localStorage.removeItem('authToken');
       localStorage.removeItem('authUser');
+      // Opcional: Limpiar cabecera de autorización por defecto en apiClient si se estableció manualmente
+      // delete apiClient.defaults.headers.common['Authorization'];
     },
 
     async login(credentials) {
       try {
-        // Asegúrate que el endpoint '/account/login' es el que usa tu apiClient
-        // Tu apiClient ya tiene la baseURL 'http://localhost:8080'
-        const response = await apiClient.post('/login', credentials);
-        const { token, user } = response.data; // Asume que el backend devuelve { token, user: { email, role, ... } }
+        const loginResponse = await apiClient.post('/login', credentials);
 
-        if (token && user) {
-          this.setAuthData(token, user);
-
-          // Redirigir al dashboard correspondiente según el rol
-          if (user.role === 'donator') {
-            router.push('/donator/dashboard');
-          } else if (user.role === 'beneficiary') {
-            router.push('/beneficiary/dashboard');
-          } else {
-            // Fallback si el rol no está definido o no hay dashboard específico
-            router.push('/donations'); // O la ruta raíz de la app para usuarios logueados
-          }
-          return true; // Indicar éxito para que el componente de login pueda reaccionar
-        } else {
-          // Si la respuesta no contiene token o user, es un error inesperado del backend
-          throw new Error("Respuesta de login inválida del servidor.");
+        if (!loginResponse || !loginResponse.data || !loginResponse.data.token) {
+          console.error("Token no encontrado o respuesta de login inválida.", loginResponse?.data);
+          throw new Error("Respuesta de login inválida del servidor: token faltante.");
         }
+
+        const { token } = loginResponse.data;
+        this.token = token; // Establecer token en el estado
+        localStorage.setItem('authToken', token); // Guardar token en localStorage
+
+        // --- IMPORTANTE: apiClient DEBE ESTAR CONFIGURADO PARA ENVIAR ESTE TOKEN ---
+        // (Usualmente mediante interceptores de Axios)
+
+        let inferredUser = { role: null }; // Objeto base para el usuario inferido
+
+        try {
+          // 1. Intento para Donador usando GET /aliments
+          console.debug("Intentando verificar rol de Donador con GET /aliments...");
+          // Si /aliments devuelve datos del usuario, puedes capturarlos. Ejemplo:
+          // const donatorCheckResponse = await apiClient.get('/aliments');
+          await apiClient.get('/aliments'); // Solo verificamos el acceso
+          inferredUser.role = 'donator';
+          // Si la respuesta contiene datos del usuario, extráelos:
+          // inferredUser.id = donatorCheckResponse.data.id; (ejemplo)
+          // inferredUser.name = donatorCheckResponse.data.name; (ejemplo)
+          console.info("Rol inferido: Donador (acceso a /aliments exitoso)");
+
+        } catch (donatorError) {
+          console.debug("Error al verificar rol de Donador con /aliments:", donatorError.response?.status, donatorError.message);
+          if (donatorError.response && donatorError.response.status === 403) {
+            console.info("/aliments no accesible (403). Intentando rol de Beneficiario...");
+            
+            // Declarar beneficiaryEndpoint aquí, fuera del try, para que esté disponible en el catch
+            const daysToFilterBeneficiary = 7; // O el valor que necesites
+            const beneficiaryEndpoint = `/donation/filter/${daysToFilterBeneficiary}`; // <--- DECLARADA AQUÍ
+
+            // 2. Intento para Beneficiario
+            try {
+              console.debug(`Intentando verificar rol de Beneficiario con GET ${beneficiaryEndpoint}...`);
+              await apiClient.get(beneficiaryEndpoint); // Solo verificamos el acceso
+              inferredUser.role = 'beneficiary';
+              console.info(`Rol inferido: Beneficiario (acceso a ${beneficiaryEndpoint} exitoso)`);
+            } catch (beneficiaryError) {
+              // Ahora 'beneficiaryEndpoint' está en el alcance y se puede usar en el log
+              console.debug(`Error al verificar rol de Beneficiario con ${beneficiaryEndpoint}:`, beneficiaryError.response?.status, beneficiaryError.message);
+              if (beneficiaryError.response && beneficiaryError.response.status === 403) {
+                console.error("Acceso denegado (403) a rutas de prueba para ambos roles. No se puede determinar el rol.");
+                this.clearAuthData();
+                throw new Error("No se pudo determinar el rol del usuario (acceso denegado a rutas de rol).");
+              }
+              this.clearAuthData();
+              throw new Error(`Fallo crítico al verificar el rol de beneficiario: ${beneficiaryError.message}`);
+            }
+          } else {
+            this.clearAuthData();
+            throw new Error(`Fallo crítico al verificar el rol de donador: ${donatorError.message}`);
+          }
+        }
+
+        if (!inferredUser.role) {
+          // Si después de todos los intentos el rol sigue siendo null (no debería llegar aquí si la lógica es correcta)
+          console.error("El rol del usuario no pudo ser inferido (inesperado).");
+          this.clearAuthData();
+          throw new Error("No se pudo inferir el rol del usuario.");
+        }
+
+        // Guardar token y el usuario (con el rol inferido) usando setAuthData
+        this.setAuthData(this.token, inferredUser); // this.token ya fue establecido
+        console.info("Autenticación y determinación de rol exitosas. Usuario:", this.user);
+
+        // Redirección basada en el rol inferido
+        if (this.user.role === 'donator') {
+          router.push('/donator/dashboard');
+        } else if (this.user.role === 'beneficiary') {
+          router.push('/beneficiary/dashboard');
+        } else {
+          console.warn("Rol de usuario desconocido para redirección (inesperado), usando fallback.");
+          router.push('/donations');
+        }
+        return true;
+
       } catch (error) {
-        this.clearAuthData(); // Limpiar datos en caso de error de login
-        console.error("Error en authStore.login:", error.response?.data || error.message || error);
-        throw error; // Relanzar para que el componente de login lo maneje y muestre un mensaje al usuario
+        this.clearAuthData();
+        // El mensaje de error ya debería haber sido logueado por los catch internos si es específico.
+        // Este es el error final que se propaga al componente de login.
+        const errorMessage = error.message || "Error desconocido durante el proceso de login.";
+        console.error("Fallo final en la acción authStore.login:", errorMessage);
+        throw new Error(errorMessage);
       }
     },
 
     async registerDonator(donatorData) {
-      // Ajusta el endpoint si es necesario, ej: '/account/register/donator'
-      // Tu apiClient ya tiene la baseURL
-      await apiClient.post('/account/register-donator', donatorData);
-      // Considera la respuesta. ¿Debería loguear automáticamente? ¿Mostrar un mensaje?
-      // Por ahora, solo hace la petición. El componente de registro maneja el mensaje.
+      try {
+        const response = await apiClient.post('/account/register-donator', donatorData);
+        return response.data;
+      } catch (error) {
+        console.error("Error en authStore.registerDonator:", error.response?.data || error.message || error);
+        throw error;
+      }
     },
 
     async registerBeneficiary(beneficiaryData) {
-      // Ajusta el endpoint si es necesario, ej: '/account/register/beneficiary'
-      await apiClient.post('/account/register-beneficiary', beneficiaryData);
-      // Similar al registro de donador, considera el flujo post-registro.
+      try {
+        const response = await apiClient.post('/account/register-beneficiary', beneficiaryData);
+        return response.data;
+      } catch (error) {
+        console.error("Error en authStore.registerBeneficiary:", error.response?.data || error.message || error);
+        throw error;
+      }
     },
 
     logout() {
       this.clearAuthData();
-      router.push('/login'); // Redirige a login después de cerrar sesión
-                             // O a la ruta raíz si es /register-donator
+      router.push('/login');
     },
 
     initializeAuth() {
       const token = localStorage.getItem('authToken');
-      const userItem = localStorage.getItem('authUser'); // Obtener el string
+      const userItem = localStorage.getItem('authUser');
 
       if (token && userItem && userItem !== "undefined" && userItem !== "null") {
         try {
           const parsedUser = JSON.parse(userItem);
-          if (parsedUser && typeof parsedUser === 'object' && Object.keys(parsedUser).length > 0) {
+          if (parsedUser && typeof parsedUser === 'object' && parsedUser.role) {
             this.token = token;
             this.user = parsedUser;
+            // Opcional: Configurar cabecera de apiClient si es necesario al inicio
+            // apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
           } else {
-            // El JSON parseado es null o un objeto vacío, considéralo inválido
+            console.warn("Datos de usuario en localStorage inválidos o sin rol durante initializeAuth. Limpiando.");
             this.clearAuthData();
           }
         } catch (e) {
-          console.error("Error parsing 'authUser' during initializeAuth:", e);
-          this.clearAuthData(); // Limpiar si hay un error de parseo
+          console.error("Error al parsear 'authUser' durante initializeAuth:", e);
+          this.clearAuthData();
         }
       } else {
-        // Si falta el token, o userItem es la cadena "undefined" o "null", o es null
+        if (token && (!userItem || userItem === "undefined" || userItem === "null")) {
+          console.warn("Token presente pero 'authUser' faltante o inválido en localStorage durante initializeAuth. Limpiando.");
+        }
         this.clearAuthData();
       }
     }
