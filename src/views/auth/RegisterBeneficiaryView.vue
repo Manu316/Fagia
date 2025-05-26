@@ -68,9 +68,9 @@
 
 <script setup>
 import { ref } from 'vue';
-import { useAuthStore } from '@/stores/authStore'; // Importa el store de autenticación
+import { useAuthStore } from '@/stores/authStore';
 
-const authStore = useAuthStore(); // Obtén la instancia del store
+const authStore = useAuthStore();
 
 const beneficiary = ref({
   representant_name: '',
@@ -78,52 +78,44 @@ const beneficiary = ref({
   representant_lastname_m: '',
   phone: '',
   legal_name: '',
-  foundation_date: '', // Formato YYYY-MM-DD
+  foundation_date: '', 
   nif: '',
-  website: '', // Ahora requerido
+  website: '',
   email: '',
   password: '',
-  r_type: 'Beneficiary' // Fijo para el registro de beneficiario
+  r_type: 'Beneficiary'
 });
 
 const errorMessage = ref('');
 const successMessage = ref('');
-const loading = ref(false); // Estado de carga del botón
+const loading = ref(false);
 
 const submitBeneficiaryForm = async () => {
-  console.log('¡Intentando enviar el formulario de Beneficiario!'); // Para depuración
+  console.log('¡Intentando enviar el formulario de Beneficiario!');
   errorMessage.value = '';
   successMessage.value = '';
-  loading.value = true; // Habilita el estado de carga
+  loading.value = true;
 
   try {
-    // Llama a la acción registerBeneficiary de tu store Pinia
-    // El store ya usa apiClient internamente
     const response = await authStore.registerBeneficiary(beneficiary.value);
 
     successMessage.value = response.message || 'Beneficiario registrado con éxito. Por favor, inicia sesión.';
-    // Limpiar formulario después del éxito
     beneficiary.value = {
       representant_name: '', representant_lastname_f: '', representant_lastname_m: '',
       phone: '', legal_name: '', foundation_date: '', nif: '', website: '',
       email: '', password: '', r_type: 'Beneficiary'
     };
-    // Opcional: Redirigir al login después de un pequeño retraso
-    // setTimeout(() => router.push('/login'), 3000);
 
   } catch (error) {
-    // Captura errores de la red o del backend
-    // Asume que el backend devuelve { message: "..." } en caso de error
     errorMessage.value = error.response?.data?.message || error.message || 'Error al registrar beneficiario.';
     console.error("Error en RegisterBeneficiaryView:", error);
   } finally {
-    loading.value = false; // Deshabilita el estado de carga
+    loading.value = false;
   }
 };
 </script>
 
 <style scoped>
-/* Estilos son idénticos a RegisterDonatorView, puedes centralizarlos si quieres */
 .container {
   max-width: 500px;
   margin: 20px auto;
@@ -140,7 +132,7 @@ const submitBeneficiaryForm = async () => {
   margin-bottom: 5px;
   font-weight: bold;
 }
-.form-group input, .form-group textarea { /* Añade textarea si usas */
+.form-group input, .form-group textarea { 
   width: 100%;
   padding: 8px;
   border: 1px solid #ccc;
@@ -148,7 +140,7 @@ const submitBeneficiaryForm = async () => {
   box-sizing: border-box;
 }
 button[type="submit"] {
-  background-color: #007bff; /* Azul principal para login */
+  background-color: #007bff; 
   color: white;
   padding: 10px 15px;
   border: none;
@@ -172,22 +164,22 @@ button[type="submit"]:disabled {
   color: green;
   margin-top: 10px;
 }
-.mt-4 { /* Utilidad simple de margen si no usas Tailwind aquí */
-  margin-top: 1rem; /* 16px */
+.mt-4 { 
+  margin-top: 1rem; 
 }
 .mt-2 {
-  margin-top: 0.5rem; /* 8px */
+  margin-top: 0.5rem; 
 }
 .text-center {
   text-align: center;
 }
-.text-blue-600 { /* Si no usas Tailwind, define este color */
+.text-blue-600 { 
   color: #007bff;
 }
 .text-green-600 {
   color: #28a745;
 }
-.hover\:underline:hover { /* Si no usas Tailwind, define este comportamiento */
+.hover\:underline:hover {
   text-decoration: underline;
 }
 </style>

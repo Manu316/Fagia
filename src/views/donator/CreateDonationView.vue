@@ -3,46 +3,41 @@ import { ref, onMounted } from 'vue';
 import apiClient from '@/api/api';
 import { useAuthStore } from '@/stores/authStore';
 import { useRouter } from 'vue-router';
-import { format } from 'date-fns'; // Necesitarás instalar date-fns: npm install date-fns
+import { format } from 'date-fns';
 
 const authStore = useAuthStore();
 const router = useRouter();
 
-const beneficiaries = ref([]); // Para almacenar la lista de beneficiarios
-const availableAliments = ref([]); // Para almacenar los alimentos del donador disponibles
-const selectedAliments = ref([]); // Array para los IDs de alimentos seleccionados
+const beneficiaries = ref([]);
+const availableAliments = ref([]); 
+const selectedAliments = ref([]); 
 
 const formData = ref({
   date: format(new Date(), 'yyyy-MM-dd'),
-  id_beneficiary: null, // Será el ID del beneficiario seleccionado
-  aliments: [], // Este se poblará con selectedAliments
+  id_beneficiary: null,
+  aliments: [], 
 });
 
 const errorMessage = ref('');
 const successMessage = ref('');
-const loading = ref(false); // Para el estado de la solicitud de creación
-const dataLoading = ref(true); // Para la carga de datos iniciales (beneficiarios, alimentos)
+const loading = ref(false); 
+const dataLoading = ref(true);
 
-// Redirigir si el usuario no es donador al montar el componente
 onMounted(async () => {
   if (!authStore.isAuthenticated || !authStore.isDonator) {
-    router.push('/'); // O a una página de error
+    router.push('/');
   } else {
     await fetchInitialData();
   }
 });
 
-// Función para obtener los datos iniciales (beneficiarios y alimentos del donador)
 const fetchInitialData = async () => {
   dataLoading.value = true;
   errorMessage.value = '';
   try {
-    // 1. Obtener lista de beneficiarios
     const beneficiariesResponse = await apiClient.get('/beneficiaries');
     beneficiaries.value = beneficiariesResponse.data;
 
-    // 2. Obtener lista de alimentos propios del donador
-    // El backend ya debería filtrar por el donador autenticado
     const alimentsResponse = await apiClient.get('/aliments');
     availableAliments.value = alimentsResponse.data;
 
@@ -54,19 +49,17 @@ const fetchInitialData = async () => {
   }
 };
 
-// Función para crear una nueva donación
 const createDonation = async () => {
   errorMessage.value = '';
   successMessage.value = '';
   loading.value = true;
 
-  // Doble comprobación del rol antes de intentar la llamada API
   if (!authStore.isAuthenticated || !authStore.isDonator) {
     errorMessage.value = "No tienes permiso para crear donaciones.";
     loading.value = false;
     return;
   }
-  // Validaciones del formulario
+
   if (!formData.value.id_beneficiary) {
     errorMessage.value = "Debes seleccionar un beneficiario.";
     loading.value = false;
@@ -78,25 +71,22 @@ const createDonation = async () => {
     return;
   }
 
-  // Asegúrate de que los alimentos seleccionados sean solo los IDs
   formData.value.aliments = selectedAliments.value;
 
   try {
-    // Llama al endpoint del backend para crear una donación (POST /donation)
     // eslint-disable-next-line no-unused-vars
-    const response = await apiClient.post('/donation', formData.value); // 'response' se marca como usado con el comentario ESLint
+    const response = await apiClient.post('/donation', formData.value); 
     successMessage.value = 'Donación creada exitosamente.';
-    // Opcional: Limpiar el formulario o redirigir
+
     formData.value = {
         date: format(new Date(), 'yyyy-MM-dd'),
         id_beneficiary: null,
         aliments: [],
     };
-    selectedAliments.value = []; // Limpiar selección de alimentos
-    // router.push('/donator/donations'); // Redirigir a la lista de donaciones del donador
+    selectedAliments.value = [];
   } catch (error) {
     console.error('Error al crear donación:', error);
-    // Asume que el backend devuelve { message: "..." } en caso de error
+
     errorMessage.value = error.response?.data?.message || error.message || 'Error al crear la donación. Inténtalo de nuevo.';
     if (error.response?.status === 403) {
       errorMessage.value = 'No tienes permiso para realizar esta acción.';
@@ -158,5 +148,5 @@ const createDonation = async () => {
 </template>
 
 <style scoped>
-/* Agrega estilos específicos del componente aquí */
+
 </style>

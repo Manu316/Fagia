@@ -56,58 +56,50 @@
 
 <script setup>
 import { ref } from 'vue';
-import { useAuthStore } from '@/stores/authStore'; // Importa el store de autenticación
+import { useAuthStore } from '@/stores/authStore';
 
-const authStore = useAuthStore(); // Obtén la instancia del store
+const authStore = useAuthStore();
 
 const donator = ref({
   name: '',
   lastname_f: '',
   lastname_m: '',
   phone: '',
-  organization_name: '', // Ahora requerido
+  organization_name: '',
   email: '',
   password: '',
-  r_type: 'Donator' // Fijo para el registro de donador
+  r_type: 'Donator'
 });
 
 const errorMessage = ref('');
 const successMessage = ref('');
-const loading = ref(false); // Estado de carga del botón
+const loading = ref(false);
 
 const submitDonatorForm = async () => {
-  console.log('¡Intentando enviar el formulario de Donador!'); // Para depuración
+  console.log('¡Intentando enviar el formulario de Donador!');
   errorMessage.value = '';
   successMessage.value = '';
-  loading.value = true; // Habilita el estado de carga
+  loading.value = true;
 
   try {
-    // Llama a la acción registerDonator de tu store Pinia
-    // El store ya usa apiClient internamente
     const response = await authStore.registerDonator(donator.value);
 
     successMessage.value = response.message || 'Donador registrado con éxito. Por favor, inicia sesión.';
-    // Limpiar formulario después del éxito
     donator.value = {
       name: '', lastname_f: '', lastname_m: '', phone: '',
       organization_name: '', email: '', password: '', r_type: 'Donator'
     };
-    // Opcional: Redirigir al login después de un pequeño retraso
-    // setTimeout(() => router.push('/login'), 3000);
 
   } catch (error) {
-    // Captura errores de la red o del backend
-    // Asume que el backend devuelve { message: "..." } en caso de error
     errorMessage.value = error.response?.data?.message || error.message || 'Error al registrar donador.';
     console.error("Error en RegisterDonatorView:", error);
   } finally {
-    loading.value = false; // Deshabilita el estado de carga
+    loading.value = false;
   }
 };
 </script>
 
 <style scoped>
-/* Estilos proporcionados previamente por el usuario, sin cambios */
 .container {
   max-width: 500px;
   margin: 20px auto;
@@ -124,7 +116,7 @@ const submitDonatorForm = async () => {
   margin-bottom: 5px;
   font-weight: bold;
 }
-.form-group input, .form-group textarea { /* Añade textarea si usas */
+.form-group input, .form-group textarea {
   width: 100%;
   padding: 8px;
   border: 1px solid #ccc;

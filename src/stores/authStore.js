@@ -2,13 +2,11 @@ import { defineStore } from 'pinia';
 import apiClient from '@/api/api';
 import router from '@/router';
 
-// Función auxiliar para obtener y parsear el usuario de forma segura desde localStorage
 const getInitialUser = () => {
   const userItem = localStorage.getItem('authUser');
   if (userItem && userItem !== "undefined" && userItem !== "null") {
     try {
       const parsedUser = JSON.parse(userItem);
-      // Validamos que el usuario parseado tenga la propiedad 'role'
       if (parsedUser && typeof parsedUser === 'object' && Object.keys(parsedUser).length > 0 && parsedUser.role) {
         return parsedUser;
       }
@@ -29,7 +27,7 @@ const getInitialUser = () => {
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     token: localStorage.getItem('authToken') || null,
-    user: getInitialUser(), // user será null o { role: '...' } u otros datos si se guardan
+    user: getInitialUser(),
   }),
   getters: {
     isAuthenticated: (state) => !!state.token && !!state.user && !!state.user.role,
@@ -70,17 +68,15 @@ export const useAuthStore = defineStore('auth', {
         localStorage.setItem('authToken', token);
 
         let inferredRole = null;
-        let userData = {}; // Objeto para almacenar datos completos del usuario
+        let userData = {};
 
         try {
-          // Intento para Donador usando GET /aliments
           console.debug("Intentando verificar rol de Donador con GET /aliments...");
           await apiClient.get('/aliments');
           inferredRole = 'donator';
           console.info("Rol inferido: Donador (acceso a /aliments exitoso)");
         } catch (donatorError) {
           console.debug("Error al verificar rol de Donador con /aliments:", donatorError.response?.status, donatorError.message);
-          // ¡CORRECCIÓN AQUÍ! Aceptar 401 o 403 para intentar verificar como Beneficiario
           if (donatorError.response && (donatorError.response.status === 403 || donatorError.response.status === 401)) {
             console.info(`/aliments no accesible (${donatorError.response.status}). Intentando rol de Beneficiario...`);
 
@@ -88,7 +84,6 @@ export const useAuthStore = defineStore('auth', {
             const beneficiaryEndpoint = `/beneficiary/donation/filter/${daysToFilterBeneficiary}`;
 
             try {
-              // Intento para Beneficiario
               console.debug(`Intentando verificar rol de Beneficiario con GET ${beneficiaryEndpoint}...`);
               await apiClient.get(beneficiaryEndpoint);
               inferredRole = 'beneficiary';
@@ -115,21 +110,16 @@ export const useAuthStore = defineStore('auth', {
           throw new Error("No se pudo inferir el rol del usuario.");
         }
 
-        // Obtener datos completos del perfil del usuario
         try {
           const profileResponse = await apiClient.get('/account');
           if (profileResponse.data) {
-            // El backend devuelve BeneficiaryData o DonatorData
             if (profileResponse.data.creds && profileResponse.data.data) {
               userData = {
-                // Combina los datos de credenciales y los datos específicos del rol
                 ...profileResponse.data.creds,
                 ...profileResponse.data.data,
-                role: inferredRole, // Asegúrate de usar el rol inferido si viene diferente
+                role: inferredRole, 
               };
             } else {
-              // Si la respuesta de /account no tiene el formato esperado,
-              // al menos guardamos el rol inferido.
               console.warn("La respuesta de /account no tiene el formato esperado (creds/data). Guardando rol inferido.");
               userData = { role: inferredRole };
             }
@@ -139,15 +129,12 @@ export const useAuthStore = defineStore('auth', {
           }
         } catch (profileError) {
           console.error("Error al obtener datos del perfil después del login:", profileError.message);
-          // Si falla la obtención del perfil, al menos guardamos el rol
           userData = { role: inferredRole };
         }
 
-        // Guardar token y el usuario (con el rol inferido y otros datos)
         this.setAuthData(this.token, userData);
         console.info("Autenticación y determinación de rol exitosas. Usuario:", this.user);
 
-        // Redirección basada en el rol inferido
         if (this.user.role === 'donator') {
           router.push('/donator/dashboard');
         } else if (this.user.role === 'beneficiary') {

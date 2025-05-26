@@ -56,12 +56,11 @@
   
   onMounted(() => {
     console.log('Dashboard montado. Usuario:', authStore.user, 'Rol:', authStore.userRole);
-    // Aquí podrías cargar datos específicos para los widgets del dashboard si fuera necesario
-    // Ejemplo: fetchDashboardSummary();
+  
   });
   </script>
   
   <style scoped>
-  /* Estilos específicos para el Dashboard si son necesarios */
+
   </style>
   

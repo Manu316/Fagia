@@ -110,18 +110,18 @@
   const router = useRouter();
   
   const dashboardPath = computed(() => {
-    if (!authStore.isAuthenticated) return '/'; // O la ruta que prefieras para no autenticados
+    if (!authStore.isAuthenticated) return '/'; 
     if (authStore.userRole === 'donator') {
       return '/donator/dashboard';
     } else if (authStore.userRole === 'beneficiary') {
       return '/beneficiary/dashboard';
     }
-    return '/'; // Ruta de fallback si el rol no es reconocido o no hay dashboard específico
+    return '/';
   });
   
   const handleLogout = async () => {
-    await authStore.logout(); // Asume que logout redirige o actualiza el estado
-    router.push('/login'); // Redirige a login después de cerrar sesión
+    await authStore.logout();
+    router.push('/login');
   };
   </script>
   

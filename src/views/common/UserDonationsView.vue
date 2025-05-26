@@ -33,13 +33,12 @@
   
   <script setup>
   import { ref, onMounted } from 'vue';
-  import commonService from '@/api/commonService'; // Asegúrate que la ruta es correcta
+  import commonService from '@/api/commonService';
   
   const donations = ref([]);
   const loading = ref(true);
   const error = ref(null);
   
-  // Función para formatear la fecha (puedes mejorarla o usar una librería)
   const formatDate = (dateString) => {
     if (!dateString) return 'Fecha no disponible';
     const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
@@ -51,13 +50,11 @@
       loading.value = true;
       error.value = null;
       const response = await commonService.getUserDonations();
-      // Asumiendo que response.data es un array de donaciones
-      // y que cada donación tiene una estructura como { id, creation_date, status, aliments, collection_location, ... }
-      donations.value = response.data || []; // Asigna un array vacío si response.data es undefined
+      donations.value = response.data || [];
     } catch (err) {
       console.error("Error fetching user donations:", err);
       error.value = err.response?.data?.message || err.message || "Ocurrió un error desconocido.";
-      donations.value = []; // Asegúrate de que donations sea un array en caso de error
+      donations.value = [];
     } finally {
       loading.value = false;
     }

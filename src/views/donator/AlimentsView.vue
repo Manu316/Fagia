@@ -11,22 +11,18 @@ const aliments = ref([]);
 const loading = ref(true);
 const errorMessage = ref('');
 
-// Función para navegar a la vista de edición.
 const navigateToEditAliment = (alimentId) => {
   router.push({ name: 'EditAliment', params: { id: alimentId } });
 };
 
-// Función para navegar a la vista para crear un nuevo alimento
 const navigateToCreateAliment = () => {
   router.push({ name: 'CreateAliment' });
 };
 
-// Función para navegar a la vista para crear una nueva donación
 const navigateToCreateDonation = () => {
   router.push({ name: 'CreateDonation' });
 };
 
-// Función para cargar los alimentos del donador
 const fetchAliments = async () => {
   loading.value = true;
   errorMessage.value = '';
@@ -44,7 +40,6 @@ const fetchAliments = async () => {
   }
 };
 
-// Obtiene los alimentos cuando el componente se monta, y redirige si no es donador
 onMounted(() => {
   if (!authStore.isAuthenticated || !authStore.isDonator) {
     router.push('/');
@@ -90,7 +85,6 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* Estilos generales */
 div {
   font-family: Arial, sans-serif;
   max-width: 800px;
@@ -108,7 +102,6 @@ h2 {
   margin-bottom: 20px;
 }
 
-/* Estilos para el enlace de "Ir al Inicio" */
 .top-nav {
   text-align: right;
   margin-bottom: 15px;
@@ -122,7 +115,6 @@ h2 {
   text-decoration: underline;
 }
 
-/* Estilos para los botones de acción (Crear Alimento/Donación) */
 .action-buttons {
   text-align: center;
   margin-bottom: 20px;
@@ -142,16 +134,14 @@ h2 {
   background-color: #218838;
 }
 
-/* Estilos para mensajes de carga y error */
 p {
   text-align: center;
   margin-top: 10px;
 }
-p[style*="color: red"] { /* Para el errorMessage */
+p[style*="color: red"] {
   font-weight: bold;
 }
 
-/* Estilos para la lista de alimentos */
 .aliments-list {
   list-style: none;
   padding: 0;
@@ -159,7 +149,7 @@ p[style*="color: red"] { /* Para el errorMessage */
 .aliments-list li {
   display: flex;
   align-items: center;
-  justify-content: space-between; /* Para que el botón "Editar" se alinee a la derecha */
+  justify-content: space-between;
   margin-bottom: 10px;
   border: 1px solid #ddd;
   padding: 10px 15px;
@@ -173,10 +163,9 @@ p[style*="color: red"] { /* Para el errorMessage */
 }
 .aliment-stock {
   font-weight: bold;
-  color: #007bff; /* Un color para destacar el stock */
+  color: #007bff;
 }
 
-/* Estilos para el botón Editar */
 .edit-button {
   background-color: #007bff;
   color: white;
@@ -191,7 +180,6 @@ p[style*="color: red"] { /* Para el errorMessage */
   background-color: #0056b3;
 }
 
-/* Estilos para el pie de página */
 .footer-text {
   margin-top: 30px;
   font-size: 0.8em;

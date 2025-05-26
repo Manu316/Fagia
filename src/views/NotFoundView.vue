@@ -16,17 +16,16 @@
 import { useAuthStore } from '@/stores/authStore';
 const authStore = useAuthStore();
 
-// Función para determinar la ruta del dashboard dinámicamente
 const getDashboardPath = () => {
   if (authStore.userRole === 'donator') {
     return '/donator/dashboard';
   } else if (authStore.userRole === 'beneficiary') {
     return '/beneficiary/dashboard';
   }
-  return '/'; // Ruta por defecto si no hay rol o es desconocido
+  return '/';
 };
 </script>
 
 <style scoped>
-/* Estilos adicionales si son necesarios */
+
 </style>

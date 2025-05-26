@@ -17,26 +17,11 @@
   </template>
   
   <script setup>
-  import { useAuthStore } from '@/stores/authStore'; // Asegúrate que la ruta es correcta
-  // import { ref, onMounted } from 'vue';
-  // import someDonatorService from '@/api/donatorService'; // Si necesitas cargar datos específicos del dashboard
+  import { useAuthStore } from '@/stores/authStore'; 
+
   
   const authStore = useAuthStore();
-  
-  // Si necesitas cargar datos específicos para el dashboard, puedes hacerlo aquí
-  // const summary = ref({
-  //   totalDonations: 0,
-  //   availableAliments: 0,
-  // });
-  
-  // onMounted(async () => {
-  //   try {
-  //     // Ejemplo: const summaryData = await someDonatorService.getDashboardSummary();
-  //     // summary.value = summaryData.data;
-  //   } catch (error) {
-  //     console.error("Error loading donator dashboard summary:", error);
-  //   }
-  // });
+ 
   </script>
   
   <style scoped>
@@ -51,29 +36,29 @@
   
   h2 {
     text-align: center;
-    color: #2c3e50; /* Un azul oscuro */
+    color: #2c3e50;
     margin-bottom: 15px;
   }
   
   .dashboard-donator > p {
     text-align: center;
     font-size: 1.1em;
-    color: #34495e; /* Un gris azulado */
+    color: #34495e; 
     margin-bottom: 25px;
   }
   
   .dashboard-actions {
     display: flex;
     justify-content: center;
-    gap: 15px; /* Espacio entre los botones/enlaces */
+    gap: 15px; 
     margin-bottom: 30px;
-    flex-wrap: wrap; /* Para que se ajusten en pantallas pequeñas */
+    flex-wrap: wrap;
   }
   
   .action-link {
     display: inline-block;
     padding: 12px 25px;
-    background-color: #3498db; /* Azul */
+    background-color: #3498db;
     color: white;
     text-decoration: none;
     border-radius: 5px;
@@ -83,14 +68,14 @@
   }
   
   .action-link:hover {
-    background-color: #2980b9; /* Azul más oscuro al pasar el mouse */
+    background-color: #2980b9;
   }
   
   .dashboard-summary {
     background-color: #ffffff;
     padding: 20px;
     border-radius: 6px;
-    border: 1px solid #ecf0f1; /* Un gris muy claro */
+    border: 1px solid #ecf0f1;
     box-shadow: 0 1px 3px rgba(0,0,0,0.03);
   }
   

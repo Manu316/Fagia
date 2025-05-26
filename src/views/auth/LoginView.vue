@@ -43,16 +43,14 @@ const loading = ref(false);
 const error = ref(null);
 
 const handleLogin = async () => {
-  console.log('Función handleLogin iniciada.'); // Para depuración
+  console.log('Función handleLogin iniciada.'); 
   loading.value = true;
   error.value = null;
   try {
     await authStore.login(credentials.value);
-    // La redirección se maneja dentro de la acción de login en authStore
+
   } catch (err) {
-    // Asegúrate que el error que viene del store (o Axios) sea útil para el usuario
     if (err.response && err.response.data) {
-        // Intenta obtener un mensaje más específico del backend, asumiendo 'message'
         error.value = err.response.data.message || 'Credenciales incorrectas o error en el servidor.';
     } else {
         error.value = err.message || 'Error al iniciar sesión. Verifica tu conexión.';
@@ -65,13 +63,11 @@ const handleLogin = async () => {
 
 onMounted(() => {
   if (authStore.isAuthenticated) {
-    // Redirigir al dashboard apropiado si ya está autenticado
     if (authStore.userRole === 'donator') {
       router.push('/donator/dashboard');
     } else if (authStore.userRole === 'beneficiary') {
       router.push('/beneficiary/dashboard');
     } else {
-      // Fallback si está autenticado pero sin un rol claro o dashboard asignado
       router.push('/donations');
     }
   }
@@ -79,15 +75,14 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Estilos proporcionados previamente por el usuario, sin cambios */
 .container {
-  max-width: 400px; /* Ajusta el ancho máximo si es necesario */
-  margin: 40px auto; /* Centra y añade margen superior/inferior */
+  max-width: 400px; 
+  margin: 40px auto; 
   padding: 20px;
-  border: 1px solid #eee; /* Borde ligero */
-  border-radius: 8px; /* Bordes redondeados */
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1); /* Sombra sutil */
-  background-color: #fff; /* Fondo blanco */
+  border: 1px solid #eee; 
+  border-radius: 8px; 
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+  background-color: #fff; 
 }
 
 h2 {
@@ -110,61 +105,61 @@ h2 {
 
 .form-group input {
   width: 100%;
-  padding: 10px; /* Padding un poco más grande */
+  padding: 10px; 
   border: 1px solid #ccc;
   border-radius: 4px;
-  box-sizing: border-box; /* Importante para que el padding no aumente el ancho total */
+  box-sizing: border-box;
   font-size: 1em;
 }
 
 .form-group input:focus {
-  border-color: #007bff; /* Color de borde al enfocar (azul) */
-  outline: none; /* Quita el outline por defecto del navegador */
-  box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25); /* Sombra similar a Bootstrap al enfocar */
+  border-color: #007bff;
+  outline: none;
+  box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
 }
 
 button[type="submit"] {
-  background-color: #007bff; /* Azul principal para login */
+  background-color: #007bff; 
   color: white;
   padding: 10px 15px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-size: 16px;
-  width: 100%; /* Botón de ancho completo */
+  width: 100%; 
   transition: background-color 0.2s ease-in-out;
 }
 
 button[type="submit"]:hover {
-  background-color: #0056b3; /* Azul más oscuro al pasar el mouse */
+  background-color: #0056b3; 
 }
 
 button[type="submit"]:disabled {
-  background-color: #6c757d; /* Color gris cuando está deshabilitado */
+  background-color: #6c757d; 
   cursor: not-allowed;
 }
 
 .error-message {
-  color: #dc3545; /* Rojo para errores */
-  background-color: #f8d7da; /* Fondo rojo claro */
-  border: 1px solid #f5c6cb; /* Borde rojo */
+  color: #dc3545;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb; 
   padding: 10px;
   border-radius: 4px;
   margin-top: 15px;
   text-align: center;
 }
 
-/* Estilos para el enlace de "¿No tienes cuenta?" */
+
 .mt-4 {
-  margin-top: 1.5rem; /* 24px, un poco más de espacio */
+  margin-top: 1.5rem; 
 }
 .text-center {
   text-align: center;
 }
 .text-blue-600 {
-  color: #007bff; /* Azul para el enlace */
+  color: #007bff; 
 }
-.hover\:underline:hover { /* Comportamiento de subrayado al pasar el mouse */
+.hover\:underline:hover {
   text-decoration: underline;
 }
 </style>

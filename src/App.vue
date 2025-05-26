@@ -50,23 +50,15 @@
      authStore.logout();
  }
 
- // No se necesita lógica adicional aquí generalmente,
- // la inicialización y guardias se manejan en main.js y router/index.js
 </script>
 
 <style>
-/* Estilos globales y para transiciones */
 
-/* Importa aquí tu CSS principal (ej: Tailwind) */
-/* @import '@/assets/main.css'; */
-
-/* Estilos base si no usas framework */
 body {
   margin: 0;
-  font-family: 'Inter', sans-serif; /* Ejemplo de fuente */
+  font-family: 'Inter', sans-serif; 
 }
 
-/* Estilos para la transición fade (suave) */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.2s ease-out;
