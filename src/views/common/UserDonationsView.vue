@@ -1,123 +1,87 @@
 <template>
-    <div class="user-donations-view">
-      <h2>Mis Donaciones</h2>
-      <div v-if="loading" class="loading">Cargando donaciones...</div>
-      <div v-if="error" class="error-message">
-        <p>Error al cargar las donaciones: {{ error }}</p>
-      </div>
-      <div v-if="!loading && !error && donations.length === 0" class="no-donations">
-        <p>Aún no has realizado ni recibido donaciones.</p>
-      </div>
-      <div v-if="!loading && !error && donations.length > 0" class="donations-list">
-        <ul>
-          <li v-for="donation in donations" :key="donation.id" class="donation-item">
-            <div class="donation-details">
-              <p><strong>ID de Donación:</strong> {{ donation.id }}</p>
-              <p><strong>Fecha:</strong> {{ formatDate(donation.creation_date) }}</p>
-              <p><strong>Estado:</strong> {{ donation.status }}</p>
-              <div v-if="donation.aliments && donation.aliments.length > 0">
-                <strong>Alimentos:</strong>
-                <ul>
-                  <li v-for="aliment in donation.aliments" :key="aliment.id_aliment">
-                    {{ aliment.name }} ({{ aliment.quantity }})
-                  </li>
-                </ul>
-              </div>
-              <p v-if="donation.collection_location"><strong>Lugar de Recogida:</strong> {{ donation.collection_location }}</p>
-            </div>
-          </li>
-        </ul>
+  <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center rounded-lg p-3 bg-blue-100 shadow-md">
+      Mis Donaciones
+    </h1>
+
+    <div v-if="loading" class="text-center text-blue-600 text-lg">Cargando donaciones...</div>
+    <div v-else-if="error" class="text-center text-red-600 text-lg bg-red-100 p-4 rounded-lg shadow-md">
+      Error al cargar las donaciones: {{ error }}
+    </div>
+    <div v-else-if="donations.length === 0" class="text-center text-gray-600 text-lg bg-yellow-100 p-4 rounded-lg shadow-md">
+      No hay donaciones disponibles para mostrar.
+    </div>
+    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div v-for="donation in donations" :key="donation.id" class="bg-white rounded-lg shadow-lg overflow-hidden transform transition duration-300 hover:scale-105 hover:shadow-xl">
+        <div class="p-6">
+          <h2 class="text-xl font-semibold text-gray-900 mb-3">Donación #{{ donation.id }}</h2>
+          <p class="text-gray-700 mb-2">
+            <span class="font-medium">Fecha:</span> {{ formatDate(donation.date) }}
+          </p>
+          <p class="text-gray-700 mb-2">
+            <span class="font-medium">ID Donador:</span> {{ donation.id_donator }}
+          </p>
+          <p class="text-gray-700 mb-4">
+            <span class="font-medium">ID Beneficiario:</span> {{ donation.id_beneficiary }}
+          </p>
+          <div class="mt-4 pt-4 border-t border-gray-200">
+            <h3 class="text-lg font-medium text-gray-800 mb-2">Alimentos Donados:</h3>
+            <ul v-if="donation.aliments && donation.aliments.length > 0" class="list-disc list-inside text-gray-600">
+              <li v-for="aliment in donation.aliments" :key="aliment.id" class="mb-1">
+                {{ aliment.name }} (Tipo: {{ aliment.r_type }}, Lotes: {{ aliment.lots }})
+              </li>
+            </ul>
+            <p v-else class="text-gray-500 italic">No hay alimentos detallados para esta donación.</p>
+          </div>
+        </div>
       </div>
     </div>
-  </template>
-  
-  <script setup>
-  import { ref, onMounted } from 'vue';
-  import commonService from '@/api/commonService';
-  
-  const donations = ref([]);
-  const loading = ref(true);
-  const error = ref(null);
-  
-  const formatDate = (dateString) => {
-    if (!dateString) return 'Fecha no disponible';
-    const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-    return new Date(dateString).toLocaleDateString(undefined, options);
-  };
-  
-  onMounted(async () => {
-    try {
-      loading.value = true;
-      error.value = null;
-      const response = await commonService.getUserDonations();
-      donations.value = response.data || [];
-    } catch (err) {
-      console.error("Error fetching user donations:", err);
-      error.value = err.response?.data?.message || err.message || "Ocurrió un error desconocido.";
-      donations.value = [];
-    } finally {
-      loading.value = false;
-    }
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted } from 'vue';
+import apiClient from '@/api/api';
+import { useAuthStore } from '@/stores/authStore';
+
+const donations = ref([]);
+const loading = ref(true);
+const error = ref(null);
+const authStore = useAuthStore();
+
+const fetchDonations = async () => {
+  loading.value = true;
+  error.value = null;
+  try {
+    const response = await apiClient.get('/donation', {
+      headers: {
+        Authorization: `Bearer ${authStore.token}`
+      }
+    });
+    donations.value = response.data;
+  } catch (err) {
+    console.error('Error fetching user donations:', err);
+    error.value = err.response?.data?.message || 'Ocurrió un error al obtener las donaciones.';
+  } finally {
+    loading.value = false;
+  }
+};
+
+const formatDate = (dateString) => {
+  if (!dateString) return 'N/A';
+  const date = new Date(dateString);
+  return date.toLocaleDateString('es-ES', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
   });
-  </script>
-  
-  <style scoped>
-  .user-donations-view {
-    max-width: 800px;
-    margin: 20px auto;
-    padding: 20px;
-    background-color: #f9f9f9;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  }
-  
-  h2 {
-    text-align: center;
-    color: #333;
-    margin-bottom: 20px;
-  }
-  
-  .loading, .no-donations {
-    text-align: center;
-    padding: 20px;
-    color: #666;
-  }
-  
-  .error-message {
-    background-color: #ffebee;
-    color: #c62828;
-    border: 1px solid #ef9a9a;
-    padding: 15px;
-    border-radius: 4px;
-    margin-bottom: 20px;
-    text-align: center;
-  }
-  
-  .donations-list ul {
-    list-style-type: none;
-    padding: 0;
-  }
-  
-  .donation-item {
-    background-color: #fff;
-    border: 1px solid #ddd;
-    padding: 15px;
-    margin-bottom: 10px;
-    border-radius: 4px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  }
-  
-  .donation-item p {
-    margin: 5px 0;
-    color: #555;
-  }
-  
-  .donation-item strong {
-    color: #333;
-  }
-  
-  .donation-details ul {
-    list-style-type: disc;
-    margin-left: 20px;
-  }
-  </style>
+};
+
+onMounted(() => {
+  fetchDonations();
+});
+</script>
+
+<style scoped>
+/* Tailwind CSS is used for styling. No custom CSS needed unless for very specific cases. */
+</style>

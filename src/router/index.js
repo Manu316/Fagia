@@ -15,14 +15,13 @@ import EditAlimentView from '@/views/donator/EditAlimentView.vue';
 import CreateDonationView from '@/views/donator/CreateDonationView.vue';
 
 import DashboardBeneficiaryView from '@/views/beneficiary/DashboardBeneficiaryView.vue';
-import BeneficiaryDonationsView from '@/views/beneficiary/DonationsView.vue';
+import DonationsView from '@/views/beneficiary/DonationsView.vue';
 
 const routes = [
   {
     path: '/',
     redirect: '/register-donator'
   },
-
   {
     path: '/login',
     name: 'Login',
@@ -41,14 +40,12 @@ const routes = [
     component: RegisterBeneficiaryView,
     meta: { guestOnly: true }
   },
-
   {
     path: '/donations',
     name: 'UserDonations',
     component: UserDonationsView,
     meta: { requiresAuth: true },
   },
-
   {
     path: '/donator/dashboard',
     name: 'DashboardDonator',
@@ -61,14 +58,14 @@ const routes = [
     component: AlimentsView,
     meta: { requiresAuth: true, role: 'donator' },
   },
-  { 
+  {
     path: '/donator/aliments/create',
     name: 'CreateAliment',
     component: CreateAlimentView,
     meta: { requiresAuth: true, role: 'donator' },
   },
-  { 
-    path: '/donator/liments/:id/edit',
+  {
+    path: '/donator/aliments/:id/edit',
     name: 'EditAliment',
     component: EditAlimentView,
     props: true,
@@ -80,20 +77,18 @@ const routes = [
     component: CreateDonationView,
     meta: { requiresAuth: true, role: 'donator' },
   },
-
   {
     path: '/beneficiary/dashboard',
     name: 'DashboardBeneficiary',
     component: DashboardBeneficiaryView,
     meta: { requiresAuth: true, role: 'beneficiary' },
   },
-  { 
+  {
     path: '/beneficiary/donations',
     name: 'BeneficiaryDonations',
-    component: BeneficiaryDonationsView,
+    component: DonationsView,
     meta: { requiresAuth: true, role: 'beneficiary' },
   },
-
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
@@ -118,21 +113,25 @@ router.beforeEach((to, from, next) => {
     } else if (userRole === 'beneficiary') {
       return next({ name: 'DashboardBeneficiary' });
     } else {
+      // If user is authenticated but has an unknown role, redirect to UserDonations
       return next({ name: 'UserDonations' });
     }
   }
 
   if (to.meta.requiresAuth && !isAuthenticated) {
+    // Redirect to login if authentication is required but user is not authenticated
     return next({ name: 'Login', query: { redirect: to.fullPath } });
   }
 
   if (to.meta.role && isAuthenticated && to.meta.role !== userRole) {
     console.warn(`Acceso denegado a ${to.path}. Rol requerido: ${to.meta.role}, Rol del usuario: ${userRole}`);
+    // Redirect based on user role if they try to access a forbidden route
     if (userRole === 'donator') {
       return next({ name: 'DashboardDonator' });
     } else if (userRole === 'beneficiary') {
       return next({ name: 'DashboardBeneficiary' });
     }
+    // If the role is not recognized or no specific dashboard for that role, go to NotFound
     return next({ name: 'NotFound' });
   }
 
