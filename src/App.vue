@@ -3,7 +3,8 @@
 
     <header v-if="authStore.isAuthenticated" class="bg-gradient-to-r from-gray-800 to-gray-700 text-white shadow-lg sticky top-0 z-40">
       <nav class="container mx-auto px-4 sm:px-6 lg:px-8 py-3 flex justify-end items-center">
-        <button @click="handleLogout" class="px-3 py-2 bg-red-600 rounded-md text-sm font-medium hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-red-500 transition duration-150 ease-in-out">
+        <button @click="handleLogout"
+          class="ml-auto px-6 py-3 bg-red-600 text-white font-bold rounded-lg shadow-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition duration-300 ease-in-out">
           Cerrar Sesión
         </button>
       </nav>
@@ -26,14 +27,14 @@
 
 <script setup>
 import { useAuthStore } from '@/stores/authStore';
-import { useRouter } from 'vue-router'; // Import useRouter
+import { useRouter } from 'vue-router';
 
 const authStore = useAuthStore();
-const router = useRouter(); // Initialize router
+const router = useRouter();
 
 const handleLogout = () => {
   authStore.logout();
-  router.push('/login'); // Redirect to your login page after logout
+  router.push('/login');
 }
 </script>
 
@@ -42,7 +43,6 @@ const handleLogout = () => {
 body {
   margin: 0;
   font-family: 'Inter', sans-serif;
-  /* Ensure html and body take full height for min-h-screen on #app to work */
   height: 100%;
 }
 
