@@ -5,6 +5,7 @@
     <div class="dashboard-actions action-links-container">
       <router-link to="/donator/dashboard" class="action-link">Volver al Panel</router-link>
       <router-link to="/donator/aliments/create" class="action-link create-button">Crear Nuevo Alimento</router-link>
+      <router-link to="/donator/donations/create" class="action-link create-button">Crear Donación</router-link>
     </div>
 
     <p v-if="!authStore.isAuthenticated || !authStore.isDonator" class="info-message error-message">
@@ -158,7 +159,7 @@ h2 {
   background-color: #2980b9;
 }
 
-/* Estilos específicos para el botón "Crear Nuevo Alimento" */
+/* Estilos específicos para el botón "Crear Nuevo Alimento" y ahora "Crear Donación" */
 .create-button {
   background-color: #28a745; /* Verde para la acción de crear */
 }
@@ -166,6 +167,8 @@ h2 {
 .create-button:hover {
   background-color: #218838;
 }
+
+/* Se elimina el estilo .create-donation-button ya que no es necesario */
 
 /* Estilos para la lista de alimentos */
 .aliments-list {

@@ -138,12 +138,13 @@ const createDonation = async () => {
     return;
   }
 
-  // Asegúrate de que solo envías los IDs de los alimentos seleccionados
-  formData.value.aliments = selectedAliments.value.map(id => ({ id })); // Si la API espera un array de objetos { id: X }
-  // O simplemente: formData.value.aliments = selectedAliments.value; // Si la API espera un array de IDs [X, Y]
-  // Verifica la documentación de tu API para saber qué formato espera para 'aliments'
+  // === INICIO DE LA CORRECCIÓN ===
+  // Asume que la API de Rust espera un array de IDs de alimentos, no un array de objetos.
+  formData.value.aliments = selectedAliments.value;
+  // === FIN DE LA CORRECCIÓN ===
 
   try {
+    // La ruta de la API para crear donaciones es '/donation' en donatorService.js
     await apiClient.post('/donation', formData.value, {
       headers: {
         Authorization: `Bearer ${authStore.token}` // Asegurar que el token se envíe
