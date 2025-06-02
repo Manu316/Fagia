@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: . # ¡Cambiado de ./Fagia-6cb653b529fe8b2dae0a8aab5610c8e3783337b1 a . !
+      dockerfile: Dockerfile
+    container_name: fagia-frontend
+    ports:
+      - "80:80"
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
